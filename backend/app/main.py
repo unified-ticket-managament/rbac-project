@@ -1,33 +1,52 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.v1 import api_router
+from app.api.v1.api_router import api_router
 from app.core.config import get_settings
-from app.core.logging import setup_logging
-from app.middleware import RequestLoggingMiddleware, SecurityHeadersMiddleware
 
 settings = get_settings()
 
 
+# --------------------------------------------------
+# Application Lifespan
+# --------------------------------------------------
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    setup_logging()
+    """
+    Application startup and shutdown events.
+    """
+
+    print("Starting RBAC Service...")
+
     yield
+
+    print("Stopping RBAC Service...")
+
+
+# --------------------------------------------------
+# FastAPI Application
+# --------------------------------------------------
 
 
 app = FastAPI(
-    title="Staff Manager Client Management System",
+    title="RBAC Service",
+    description="Role Based Access Control Service",
     version="1.0.0",
-    description="Staff, Manager and Client Management API",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
+
+
+# --------------------------------------------------
+# CORS
+# --------------------------------------------------
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,31 +56,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(RequestLoggingMiddleware)
 
-app.include_router(api_router, prefix=settings.api_v1_prefix)
+# --------------------------------------------------
+# Root Endpoint
+# --------------------------------------------------
 
 
-@app.get("/health")
-async def health_check():
+@app.get("/", tags=["Root"])
+async def root():
     return {
-        "status": "healthy",
-        "service": "Staff Manager Client Management System",
+        "message": "RBAC Service is running.",
+        "docs": "/docs",
     }
 
 
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail},
-    )
+# --------------------------------------------------
+# Health Check
+# --------------------------------------------------
 
 
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=422,
-        content={"detail": exc.errors()},
-    )
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "RBAC Service",
+    }
+
+
+# --------------------------------------------------
+# API Routes
+# --------------------------------------------------
+
+
+app.include_router(
+    api_router,
+    prefix="/api/v1",
+)

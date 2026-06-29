@@ -2,7 +2,7 @@ import asyncio
 
 from sqlalchemy import select
 
-from app.core.security import get_password_hash
+from app.auth.password import get_password_hash
 from app.database.session import AsyncSessionLocal, engine
 from app.models import Base, Permission, Role, RolePermission, User
 

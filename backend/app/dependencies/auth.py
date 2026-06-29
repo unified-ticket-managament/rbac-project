@@ -1,77 +1,75 @@
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import decode_token
+from app.auth.jwt import decode_token
 from app.database.session import get_db
-from app.models import User
-from app.repositories import UserRepository
+from app.repositories.user_repository import UserRepository
 
-security_scheme = HTTPBearer(auto_error=False)
+security = HTTPBearer()
 
 
 async def get_current_user(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security_scheme)],
-) -> User:
-    if credentials is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    credentials: HTTPAuthorizationCredentials = Security(security),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Returns the authenticated user.
+    """
+
+    token = credentials.credentials
 
     try:
-        payload = decode_token(credentials.credentials)
-    except ValueError as exc:
+        payload = decode_token(token)
+
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
+            detail="Invalid or expired token.",
+        )
 
     if payload.get("type") != "access":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token type",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Invalid access token.",
         )
 
-    user_id = payload.get("sub") or payload.get("userId")
-    if not user_id:
+    user_id = payload.get("user_id")
+
+    if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Invalid token payload.",
         )
 
-    user = await UserRepository(db).get_by_id(UUID(str(user_id)))
-    if not user or not user.is_active:
+    repository = UserRepository(db)
+
+    user = await repository.get_by_id(
+        UUID(user_id),
+    )
+
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="User not found.",
         )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive.",
+        )
+
     return user
 
 
-def require_permission(permission: str):
-    async def permission_checker(
-        current_user: Annotated[User, Depends(get_current_user)],
-    ) -> User:
-        user_permissions = {p.permission_name for p in current_user.role.permissions}
-        if permission not in user_permissions:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Missing required permission: {permission}",
-            )
-        return current_user
+async def get_current_active_user(
+    current_user=Depends(get_current_user),
+):
+    """
+    Returns the authenticated active user.
+    """
 
-    return permission_checker
-
-
-def get_user_permissions(user: User) -> set[str]:
-    return {p.permission_name for p in user.role.permissions}
+    return current_user

@@ -1,8 +1,13 @@
 from collections.abc import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.core.config import get_settings
+
 
 settings = get_settings()
 
@@ -21,11 +26,14 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_db():
     async with AsyncSessionLocal() as session:
         try:
             yield session
             await session.commit()
+
         except Exception:
             await session.rollback()
             raise
+
+    
