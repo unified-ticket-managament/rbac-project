@@ -9,7 +9,7 @@ import { z } from "zod";
 
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { PageHeader } from "@/components/layout/dashboard-shell";
-import { EmptyState, ErrorState } from "@/components/shared/states";
+import { EmptyState, ErrorState } from "@/components/shared/stats";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

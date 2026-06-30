@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { PageHeader } from "@/components/layout/dashboard-shell";
-import { ErrorState } from "@/components/shared/states";
+import { ErrorState } from "@/components/shared/stats";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

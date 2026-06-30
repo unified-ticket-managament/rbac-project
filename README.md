@@ -93,7 +93,6 @@ alembic upgrade head
 ```bash
 uvicorn app.main:app --reload
 ```
-
 Backend runs at:
 
 ```
@@ -109,7 +108,6 @@ http://127.0.0.1:8000/docs
 ---
 
 ## Frontend Setup
-
 ### 1. Navigate to frontend
 
 ```bash

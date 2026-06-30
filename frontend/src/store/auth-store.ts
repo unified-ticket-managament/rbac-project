@@ -20,12 +20,18 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       hasPermission: (permission) => {
         const { user } = get();
-        return user?.permissions.includes(permission) ?? false;
+        const permissions = user?.permissions ?? [];
+        return permissions.includes(permission);
       },
       hasAnyPermission: (permissions) => {
         const { user } = get();
-        if (!user) return false;
-        return permissions.some((p) => user.permissions.includes(p));
+        if (!user) {
+          return false;
+        }
+        const userPermissions = user.permissions ?? [];
+        return permissions.some((p) =>
+          userPermissions.includes(p)
+        );
       },
       logout: () => set({ user: null, isAuthenticated: false }),
     }),

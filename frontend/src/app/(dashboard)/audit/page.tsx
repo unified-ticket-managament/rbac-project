@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/layout/dashboard-shell";
-import { EmptyState, ErrorState } from "@/components/shared/states";
+import { EmptyState, ErrorState } from "@/components/shared/stats";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

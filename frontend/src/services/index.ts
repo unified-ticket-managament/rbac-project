@@ -28,7 +28,10 @@ export const authService = {
   },
   me: async () => {
     const response = await api.get<AuthUser>("/auth/me");
-    return response.data;
+    return {
+      ...response.data,
+      permissions: response.data.permissions ?? [],
+    };
   },
   updateProfile: async (data: ProfileForm) => {
     const response = await api.patch<User>("/auth/me", data);
