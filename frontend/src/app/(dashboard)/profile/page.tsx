@@ -2,11 +2,13 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Network } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { PageHeader } from "@/components/layout/dashboard-shell";
+import { OrganizationModal } from "@/components/organization/OrganizationModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +29,7 @@ export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const [message, setMessage] = useState<string | null>(null);
+  const [orgChartOpen, setOrgChartOpen] = useState(false);
 
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -70,6 +73,14 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setOrgChartOpen(true)}
+            >
+              <Network className="h-4 w-4" />
+              Organization Chart
+            </Button>
           </CardContent>
         </Card>
 
@@ -111,6 +122,8 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <OrganizationModal open={orgChartOpen} onOpenChange={setOrgChartOpen} />
     </div>
   );
 }

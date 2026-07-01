@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies.auth import get_current_active_user
 from app.database.session import get_db
+from app.repositories.role_permission_repository import RolePermissionRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -10,6 +11,7 @@ from app.schemas.auth import (
     LoginRequest,
     RefreshTokenRequest,
     TokenResponse,
+    UpdateProfileRequest,
 )
 from app.services.auth_service import AuthService
 
@@ -31,9 +33,11 @@ def get_auth_service(
     Returns AuthService instance.
     """
     user_repository = UserRepository(db)
+    role_permission_repository = RolePermissionRepository(db)
 
     return AuthService(
         user_repository=user_repository,
+        role_permission_repository=role_permission_repository,
     )
 
 
@@ -98,6 +102,31 @@ async def get_current_user(
     Returns currently authenticated user.
     """
     return await service.get_current_user(current_user)
+
+
+# --------------------------------------------------
+# Update Profile
+# --------------------------------------------------
+
+
+@router.patch(
+    "/me",
+    response_model=CurrentUser,
+    status_code=status.HTTP_200_OK,
+    summary="Update Profile",
+)
+async def update_profile(
+    profile_data: UpdateProfileRequest,
+    current_user=Depends(get_current_active_user),
+    service: AuthService = Depends(get_auth_service),
+):
+    """
+    Update the authenticated user's name, email, and/or password.
+    """
+    return await service.update_profile(
+        current_user,
+        profile_data,
+    )
 
 
 # --------------------------------------------------

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { authService } from "@/services";
 import { useAuthStore } from "@/store/auth-store";
 
 const menuItems = [
@@ -50,7 +51,14 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = () => {
+    authService.logout();
+    logout();
+    router.push("/login");
+  };
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-border bg-card">
@@ -97,7 +105,7 @@ export function Sidebar() {
         <Button
           variant="destructive"
           className="w-full justify-start gap-3"
-          onClick={logout}
+          onClick={handleLogout}
         >
           <LogOut className="h-5 w-5" />
 

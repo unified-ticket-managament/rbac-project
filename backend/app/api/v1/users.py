@@ -7,12 +7,14 @@ from app.dependencies.auth import get_current_active_user
 from app.database.session import get_db
 from app.repositories.role_repository import RoleRepository
 from app.repositories.user_repository import UserRepository
+from app.schemas.organization import OrganizationNode
 from app.schemas.user import (
     UserCreate,
     UserListResponse,
     UserResponse,
     UserUpdate,
 )
+from app.services.organization_service import OrganizationService
 from app.services.user_service import UserService
 
 router = APIRouter(
@@ -39,6 +41,19 @@ def get_user_service(
     return UserService(
         user_repository=user_repository,
         role_repository=role_repository,
+    )
+
+
+def get_organization_service(
+    db: AsyncSession = Depends(get_db),
+) -> OrganizationService:
+    """
+    Returns OrganizationService instance.
+    """
+
+    return OrganizationService(
+        user_repository=UserRepository(db),
+        role_repository=RoleRepository(db),
     )
 
 
@@ -105,6 +120,29 @@ async def list_users(
         users=users,
         total=total,
     )
+
+
+# --------------------------------------------------
+# Organization Chart
+# --------------------------------------------------
+
+
+@router.get(
+    "/me/organization-chart",
+    response_model=OrganizationNode,
+    status_code=status.HTTP_200_OK,
+    summary="Get Organization Chart",
+)
+async def get_organization_chart(
+    service: OrganizationService = Depends(get_organization_service),
+    current_user=Depends(get_current_active_user),
+):
+    """
+    Returns the organization hierarchy chart centered on the
+    currently authenticated user.
+    """
+
+    return await service.get_chart_for_user(current_user)
 
 
 # --------------------------------------------------

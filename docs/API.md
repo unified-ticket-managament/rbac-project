@@ -17,7 +17,7 @@ Authorization: Bearer <access_token>
 **Request:**
 ```json
 {
-  "email": "admin@rbac.local",
+  "email": "admin@rbac.com",
   "password": "Admin@123456"
 }
 ```
@@ -49,7 +49,7 @@ Authorization: Bearer <access_token>
 {
   "id": "uuid",
   "name": "Super Admin",
-  "email": "admin@rbac.local",
+  "email": "admin@rbac.com",
   "role": "Super Admin",
   "role_id": "uuid",
   "permissions": ["user:create", "user:view", "..."],
@@ -175,7 +175,7 @@ Returns `204 No Content`. Performs soft delete.
 {
   "sub": "user-uuid",
   "userId": "user-uuid",
-  "email": "admin@rbac.local",
+  "email": "admin@rbac.com",
   "role": "Super Admin",
   "type": "access",
   "exp": 1719000000

@@ -23,17 +23,10 @@ export function TopNavbar() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout(
-        localStorage.getItem("refresh_token") ?? undefined
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      logout();
-      router.push("/login");
-    }
+  const handleLogout = () => {
+    authService.logout();
+    logout();
+    router.push("/login");
   };
 
   return (

@@ -15,12 +15,13 @@ interface Props {
 export function AuthGuard({ children }: Props) {
   const router = useRouter();
 
-  const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     const initialize = async () => {
       const token = localStorage.getItem("access_token");
 
@@ -29,23 +30,26 @@ export function AuthGuard({ children }: Props) {
         return;
       }
 
-      if (!user) {
-        try {
-          setLoading(false);
-          return;
-        } catch {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          router.replace("/login");
-          return;
-        }
-      }
+      try {
+        const me = await authService.me();
 
-      setLoading(false);
+        if (!cancelled) {
+          setUser(me);
+          setLoading(false);
+        }
+      } catch {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        router.replace("/login");
+      }
     };
 
     initialize();
-  }, [router, user, setUser]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, setUser]);
 
   if (loading) {
     return (

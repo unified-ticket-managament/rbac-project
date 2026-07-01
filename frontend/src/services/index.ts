@@ -3,6 +3,7 @@ import {
   AuditLog,
   AuthUser,
   LoginForm,
+  OrganizationNode,
   Permission,
   ProfileForm,
   Role,
@@ -28,17 +29,8 @@ export const authService = {
     return response.data;
   },
 
-  logout: async (refreshToken?: string) => {
-    try {
-      await api.post(
-        "/auth/logout",
-        refreshToken
-          ? { refresh_token: refreshToken }
-          : {}
-      );
-    } finally {
-      clearTokens();
-    }
+  logout: () => {
+    clearTokens();
   },
 
   me: async (): Promise<AuthUser> => {
@@ -107,6 +99,20 @@ export const userService = {
 
   delete: async (id: string) => {
     await api.delete(`/users/${id}`);
+  },
+};
+
+/* -------------------------------------------------------------------------- */
+/*                               ORGANIZATION                                 */
+/* -------------------------------------------------------------------------- */
+
+export const organizationService = {
+  getMyChart: async (): Promise<OrganizationNode> => {
+    const response = await api.get<OrganizationNode>(
+      "/users/me/organization-chart"
+    );
+
+    return response.data;
   },
 };
 

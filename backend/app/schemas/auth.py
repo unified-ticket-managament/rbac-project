@@ -23,8 +23,18 @@ class CurrentUser(BaseModel):
     name: str
     email: EmailStr
     role: str
+    role_id: UUID
+    is_active: bool
+    permissions: list[str]
 
 
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
+
+
+class UpdateProfileRequest(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
+    current_password: str | None = None
+    password: str | None = None

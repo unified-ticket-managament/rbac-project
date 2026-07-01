@@ -5,56 +5,50 @@ export interface TokenResponse {
 }
 
 export interface AuthUser {
-  id: string;
+  user_id: string;
   name: string;
   email: string;
   role: string;
   role_id: string;
-  permissions: string[];
   is_active: boolean;
+  permissions: string[];
 }
 
 export interface User {
-  id: string;
+  user_id: string;
   name: string;
   email: string;
   role_id: string;
+  manager_id: string | null;
+  teamlead_id: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  role?: Role;
 }
 
 export interface Role {
-  id: string;
+  role_id: string;
   name: string;
-  description?: string | null;
-  created_at?: string;
 }
 
 export interface Permission {
-  id: string;
+  permission_id: string;
   permission_name: string;
-  description?: string | null;
+  description: string | null;
+  created_at: string;
 }
 
 export interface AuditLog {
-  id: string;
+  audit_log_id: string;
   user_id: string | null;
   action: string;
   entity_type: string;
   entity_id: string | null;
   old_value: string | null;
   new_value: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
   timestamp: string;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
 }
 
 export interface LoginForm {
@@ -72,7 +66,6 @@ export interface UserForm {
 
 export interface RoleForm {
   name: string;
-  description?: string;
 }
 
 export interface ProfileForm {
@@ -80,4 +73,14 @@ export interface ProfileForm {
   email?: string;
   password?: string;
   current_password?: string;
+}
+
+export interface OrganizationNode {
+  user_id: string;
+  name: string;
+  email: string;
+  role: string;
+  department: string | null;
+  is_active: boolean;
+  children: OrganizationNode[];
 }

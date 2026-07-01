@@ -53,10 +53,6 @@ export default function PermissionsPage() {
               <th className="p-3 text-left">
                 Description
               </th>
-
-              <th className="p-3 text-left">
-                Active
-              </th>
             </tr>
           </thead>
 
@@ -73,19 +69,13 @@ export default function PermissionsPage() {
                 <td className="p-3">
                   {permission.description || "-"}
                 </td>
-
-                <td className="p-3">
-                  {permission.is_active
-                    ? "Yes"
-                    : "No"}
-                </td>
               </tr>
             ))}
 
             {permissions.length === 0 && (
               <tr>
                 <td
-                  colSpan={3}
+                  colSpan={2}
                   className="p-6 text-center text-muted-foreground"
                 >
                   No permissions found.

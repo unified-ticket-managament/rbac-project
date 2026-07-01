@@ -33,7 +33,7 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "admin@rbac.local", password: "Admin@123456" },
+    defaultValues: { email: "admin@rbac.com", password: "Admin@123456" },
   });
 
   const onSubmit = async (values: LoginValues) => {

@@ -137,6 +137,38 @@ class UserRepository(BaseRepository):
 
         return list(result.scalars().all())
 
+    async def get_by_manager_and_role(
+        self,
+        manager_id: UUID,
+        role_id: UUID,
+    ) -> list[User]:
+
+        result = await self.db.execute(
+            select(User)
+            .options(selectinload(User.role))
+            .where(
+                User.manager_id == manager_id,
+                User.role_id == role_id,
+            )
+            .order_by(User.name)
+        )
+
+        return list(result.scalars().all())
+
+    async def get_by_teamlead(
+        self,
+        teamlead_id: UUID,
+    ) -> list[User]:
+
+        result = await self.db.execute(
+            select(User)
+            .options(selectinload(User.role))
+            .where(User.teamlead_id == teamlead_id)
+            .order_by(User.name)
+        )
+
+        return list(result.scalars().all())
+
     async def activate(
         self,
         user: User,

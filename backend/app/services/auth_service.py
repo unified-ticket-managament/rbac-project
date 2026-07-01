@@ -13,6 +13,7 @@ from app.auth.password import (
     get_password_hash,
     verify_password,
 )
+from app.repositories.role_permission_repository import RolePermissionRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -20,6 +21,7 @@ from app.schemas.auth import (
     LoginRequest,
     RefreshTokenRequest,
     TokenResponse,
+    UpdateProfileRequest,
 )
 
 class AuthService:
@@ -30,8 +32,10 @@ class AuthService:
     def __init__(
         self,
         user_repository: UserRepository,
+        role_permission_repository: RolePermissionRepository,
     ):
         self.user_repository = user_repository
+        self.role_permission_repository = role_permission_repository
 
     # --------------------------------------------------
     # Login
@@ -156,11 +160,20 @@ class AuthService:
         user: User,
     ) -> CurrentUser:
 
+        permissions = (
+            await self.role_permission_repository.get_permissions_by_role(
+                user.role_id
+            )
+        )
+
         return CurrentUser(
             user_id=user.user_id,
             name=user.name,
             email=user.email,
             role=user.role.name,
+            role_id=user.role_id,
+            is_active=user.is_active,
+            permissions=[p.permission_name for p in permissions],
         )
     
     # --------------------------------------------------
@@ -202,3 +215,58 @@ class AuthService:
         )
 
         await self.user_repository.update(user)
+
+    # --------------------------------------------------
+    # Update Profile
+    # --------------------------------------------------
+
+    async def update_profile(
+        self,
+        user: User,
+        profile_data: UpdateProfileRequest,
+    ) -> CurrentUser:
+        """
+        Update the name, email, and/or password of the authenticated user.
+        """
+
+        if profile_data.email and profile_data.email != user.email:
+
+            existing = await self.user_repository.get_by_email(
+                profile_data.email,
+            )
+
+            if existing and existing.user_id != user.user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already exists.",
+                )
+
+            user.email = profile_data.email
+
+        if profile_data.name:
+            user.name = profile_data.name
+
+        if profile_data.password:
+
+            if not profile_data.current_password:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Current password is required to set a new password.",
+                )
+
+            if not verify_password(
+                profile_data.current_password,
+                user.password_hash,
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Current password is incorrect.",
+                )
+
+            user.password_hash = get_password_hash(
+                profile_data.password,
+            )
+
+        await self.user_repository.update(user)
+
+        return await self.get_current_user(user)

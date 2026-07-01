@@ -47,14 +47,6 @@ export default function RolesPage() {
               <th className="p-3 text-left">
                 Role Name
               </th>
-
-              <th className="p-3 text-left">
-                Description
-              </th>
-
-              <th className="p-3 text-left">
-                Active
-              </th>
             </tr>
           </thead>
 
@@ -67,21 +59,13 @@ export default function RolesPage() {
                 <td className="p-3 font-medium">
                   {role.name}
                 </td>
-
-                <td className="p-3">
-                  {role.description || "-"}
-                </td>
-
-                <td className="p-3">
-                  {role.is_active ? "Yes" : "No"}
-                </td>
               </tr>
             ))}
 
             {roles.length === 0 && (
               <tr>
                 <td
-                  colSpan={3}
+                  colSpan={1}
                   className="p-6 text-center text-muted-foreground"
                 >
                   No roles found.
