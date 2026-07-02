@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import List
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 import json
 
 from pydantic import field_validator
@@ -48,24 +49,30 @@ class Settings(BaseSettings):
     def normalize_database_url(cls, value):
         """
         Managed Postgres providers (e.g. Render, Neon) hand out URLs using
-        the `postgres://`/`postgresql://` scheme and a libpq-style
-        `sslmode=` query param. SQLAlchemy's asyncpg engine needs the
-        `postgresql+asyncpg://` scheme and an asyncpg-style `ssl=` param
-        (asyncpg's connect() raises TypeError on an unrecognized `sslmode`
-        kwarg), so normalize both here instead of hand-crafting the URL
-        per environment.
+        the `postgres://`/`postgresql://` scheme and libpq-style query
+        params (`sslmode=require`, `channel_binding=require`). asyncpg's
+        connect() raises TypeError on any keyword it doesn't recognize, so
+        rename `sslmode` to the `ssl` param it does understand and drop
+        `channel_binding`, which has no asyncpg equivalent.
         """
 
-        if isinstance(value, str):
-            if value.startswith("postgres://"):
-                value = "postgresql+asyncpg://" + value[len("postgres://"):]
+        if not isinstance(value, str):
+            return value
 
-            elif value.startswith("postgresql://"):
-                value = "postgresql+asyncpg://" + value[len("postgresql://"):]
+        if value.startswith("postgres://"):
+            value = "postgresql+asyncpg://" + value[len("postgres://"):]
 
-            value = value.replace("sslmode=", "ssl=")
+        elif value.startswith("postgresql://"):
+            value = "postgresql+asyncpg://" + value[len("postgresql://"):]
 
-        return value
+        parts = urlsplit(value)
+        query = [
+            ("ssl" if key == "sslmode" else key, val)
+            for key, val in parse_qsl(parts.query, keep_blank_values=True)
+            if key != "channel_binding"
+        ]
+
+        return urlunsplit(parts._replace(query=urlencode(query)))
 
 
 @lru_cache
