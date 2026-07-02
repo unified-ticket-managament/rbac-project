@@ -32,8 +32,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { useTranslation } from "@/hooks/use-translation";
 import { cn } from "@/lib/utils";
-import { getVisibleNavItems, NavItemKey } from "@/lib/role-access";
+import { getVisibleNavItems, NAV_ITEM_TRANSLATION_KEY, NavItemKey } from "@/lib/role-access";
 import { authService } from "@/services";
 import { getResolvedTheme, useAuthStore, useThemeStore } from "@/store/auth-store";
 
@@ -81,6 +82,7 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
 
 export function TopNavbar() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
@@ -138,7 +140,7 @@ export function TopNavbar() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
           <Input
-            placeholder="Search pages..."
+            placeholder={t("navbar.searchPlaceholder")}
             className="w-72 pl-9"
             value={query}
             onFocus={() => setSearchOpen(true)}
@@ -167,7 +169,7 @@ export function TopNavbar() {
               >
                 {results.length === 0 ? (
                   <p className="px-3 py-4 text-center text-sm text-muted-foreground">
-                    No pages match &ldquo;{query}&rdquo;
+                    {t("navbar.noResults", { query })}
                   </p>
                 ) : (
                   results.map((item) => {
@@ -179,7 +181,7 @@ export function TopNavbar() {
                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
                       >
                         <Icon className="h-4 w-4 text-muted-foreground" />
-                        {item.title}
+                        {t(NAV_ITEM_TRANSLATION_KEY[item.title])}
                       </button>
                     );
                   })
@@ -207,7 +209,7 @@ export function TopNavbar() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+            <Button variant="ghost" size="icon" className="relative" aria-label={t("navbar.notifications")}>
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
@@ -219,13 +221,13 @@ export function TopNavbar() {
 
           <DropdownMenuContent align="end" className="w-80">
             <div className="flex items-center justify-between px-2 py-1.5">
-              <DropdownMenuLabel className="p-0 text-sm">Notifications</DropdownMenuLabel>
+              <DropdownMenuLabel className="p-0 text-sm">{t("navbar.notifications")}</DropdownMenuLabel>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
                   className="text-xs font-medium text-primary hover:underline"
                 >
-                  Mark all as read
+                  {t("navbar.markAllRead")}
                 </button>
               )}
             </div>
@@ -233,7 +235,7 @@ export function TopNavbar() {
 
             {notifications.length === 0 ? (
               <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-                You&apos;re all caught up.
+                {t("navbar.allCaughtUp")}
               </p>
             ) : (
               notifications.map((notification) => (
@@ -284,20 +286,20 @@ export function TopNavbar() {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("navbar.myAccount")}</DropdownMenuLabel>
             <DropdownMenuSeparator />
 
             <DropdownMenuItem asChild>
               <Link href="/profile">
                 <User className="mr-2 h-4 w-4" />
-                Profile
+                {t("nav.profile")}
               </Link>
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
               <Link href="/settings">
                 <SettingsIcon className="mr-2 h-4 w-4" />
-                Settings
+                {t("nav.settings")}
               </Link>
             </DropdownMenuItem>
 
@@ -308,7 +310,7 @@ export function TopNavbar() {
               className="text-destructive focus:text-destructive"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Logout
+              {t("nav.logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

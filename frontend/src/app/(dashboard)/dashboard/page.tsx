@@ -35,6 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTranslation } from "@/hooks/use-translation";
+import { ROLE_NAMES } from "@/lib/role-access";
 import { cn, formatDate, formatRelativeTime } from "@/lib/utils";
 import { auditService, permissionService, roleService, userService } from "@/services";
 import { useAuthStore } from "@/store/auth-store";
@@ -50,49 +52,54 @@ const WEEKLY_LOGIN_ACTIVITY = [
   { label: "Sun", value: 17 },
 ];
 
-const QUICK_ACTIONS = [
-  {
-    title: "Add User",
-    description: "Invite a new team member",
-    href: "/users",
-    icon: UserPlus,
-    permission: "user:create",
-  },
-  {
-    title: "Create Role",
-    description: "Define a new access role",
-    href: "/roles",
-    icon: ShieldPlus,
-    permission: "role:create",
-  },
-  {
-    title: "Manage Permissions",
-    description: "Update role capabilities",
-    href: "/permissions",
-    icon: KeyRound,
-    permission: "permission:update",
-  },
-  {
-    title: "View Audit Logs",
-    description: "Review recent activity",
-    href: "/audit-logs",
-    icon: ClipboardList,
-    permission: "audit:view",
-  },
-];
-
 export default function DashboardPage() {
   const currentUser = useAuthStore((state) => state.user);
   const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission);
+  const { t } = useTranslation();
   const role = currentUser?.role;
 
-  const canSeeUsers = role === "Super Admin" || role === "Manager" || role === "Team Lead";
-  const canSeeRoles = role === "Super Admin" || role === "Manager";
-  const canSeePermissions = role === "Super Admin";
-  const canSeeAuditLogs = role === "Super Admin";
-  const canSeeCharts = role === "Super Admin";
-  const isStaff = role === "Staff";
-  const isViewer = role === "Viewer";
+  const QUICK_ACTIONS = useMemo(
+    () => [
+      {
+        title: t("dashboard.addUser"),
+        description: t("dashboard.addUserDesc"),
+        href: "/users",
+        icon: UserPlus,
+        permission: "user:create",
+      },
+      {
+        title: t("dashboard.createRole"),
+        description: t("dashboard.createRoleDesc"),
+        href: "/roles",
+        icon: ShieldPlus,
+        permission: "role:create",
+      },
+      {
+        title: t("dashboard.managePermissions"),
+        description: t("dashboard.managePermissionsDesc"),
+        href: "/permissions",
+        icon: KeyRound,
+        permission: "permission:update",
+      },
+      {
+        title: t("dashboard.viewAuditLogs"),
+        description: t("dashboard.viewAuditLogsDesc"),
+        href: "/audit-logs",
+        icon: ClipboardList,
+        permission: "audit:view",
+      },
+    ],
+    [t]
+  );
+
+  const canSeeUsers =
+    role === ROLE_NAMES.SUPER_ADMIN || role === ROLE_NAMES.MANAGER || role === ROLE_NAMES.TEAM_LEAD;
+  const canSeeRoles = role === ROLE_NAMES.SUPER_ADMIN || role === ROLE_NAMES.MANAGER;
+  const canSeePermissions = role === ROLE_NAMES.SUPER_ADMIN;
+  const canSeeAuditLogs = role === ROLE_NAMES.SUPER_ADMIN;
+  const canSeeCharts = role === ROLE_NAMES.SUPER_ADMIN;
+  const isStaff = role === ROLE_NAMES.STAFF;
+  const isViewer = role === ROLE_NAMES.VIEWER;
   const hasAdminQuickActions = hasAnyPermission(QUICK_ACTIONS.map((a) => a.permission));
 
   const usersQuery = useQuery({
@@ -154,7 +161,7 @@ export default function DashboardPage() {
 
     if (canSeeUsers) {
       cards.push({
-        title: "Total Users",
+        title: t("dashboard.totalUsers"),
         value: usersQuery.data?.total ?? (usersQuery.isLoading ? "…" : 0),
         subtitle: "Across all roles",
         icon: Users,
@@ -162,7 +169,7 @@ export default function DashboardPage() {
     }
     if (canSeeRoles) {
       cards.push({
-        title: "Total Roles",
+        title: t("dashboard.totalRoles"),
         value: rolesQuery.data?.total ?? (rolesQuery.isLoading ? "…" : 0),
         subtitle: "Configured access roles",
         icon: Shield,
@@ -170,7 +177,7 @@ export default function DashboardPage() {
     }
     if (canSeePermissions) {
       cards.push({
-        title: "Total Permissions",
+        title: t("dashboard.totalPermissions"),
         value: permissionsQuery.data?.total ?? (permissionsQuery.isLoading ? "…" : 0),
         subtitle: "Granular capabilities",
         icon: KeyRound,
@@ -178,7 +185,7 @@ export default function DashboardPage() {
     }
     if (canSeeAuditLogs) {
       cards.push({
-        title: "Audit Logs",
+        title: t("dashboard.auditLogsStat"),
         value: auditQuery.data?.total ?? (auditQuery.isLoading ? "…" : 0),
         subtitle: "Recorded system events",
         icon: ClipboardList,
@@ -186,13 +193,13 @@ export default function DashboardPage() {
     }
     if (isStaff) {
       cards.push({
-        title: "Tasks",
+        title: t("dashboard.tasks"),
         value: 12,
         subtitle: "Mock — assigned to you",
         icon: ListChecks,
       });
       cards.push({
-        title: "Projects",
+        title: t("dashboard.projects"),
         value: 4,
         subtitle: "Mock — active projects",
         icon: FolderKanban,
@@ -201,6 +208,7 @@ export default function DashboardPage() {
 
     return cards;
   }, [
+    t,
     canSeeUsers,
     canSeeRoles,
     canSeePermissions,
@@ -218,22 +226,22 @@ export default function DashboardPage() {
 
   const personalLinks = useMemo(() => {
     const links = [
-      { title: "View Profile", description: "See your account details", href: "/profile", icon: UserCircle },
-      { title: "Settings", description: "Manage preferences & security", href: "/settings", icon: SettingsIcon },
+      { title: t("dashboard.viewProfile"), description: t("dashboard.viewProfileDesc"), href: "/profile", icon: UserCircle },
+      { title: t("nav.settings"), description: t("dashboard.settingsDesc"), href: "/settings", icon: SettingsIcon },
     ];
     if (canSeeUsers) {
-      links.unshift({ title: "View Users", description: "See your team members", href: "/users", icon: Users });
+      links.unshift({ title: t("dashboard.viewUsers"), description: t("dashboard.viewUsersDesc"), href: "/users", icon: Users });
     }
     return links;
-  }, [canSeeUsers]);
+  }, [canSeeUsers, t]);
 
-  const secondaryActionsTitle = isViewer ? "Quick Links" : "Quick Actions";
+  const secondaryActionsTitle = isViewer ? t("dashboard.quickLinks") : t("dashboard.quickActions");
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title={`Welcome, ${currentUser?.name ?? "there"}`}
-        description="Here's what's happening across your organization today."
+        title={t("dashboard.welcome", { name: currentUser?.name ?? "there" })}
+        description={t("dashboard.subtitle")}
       />
 
       {/* Statistics Cards */}
@@ -255,7 +263,7 @@ export default function DashboardPage() {
       {isViewer && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Profile Summary</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.profileSummary")}</CardTitle>
             <CardDescription>Your account at a glance.</CardDescription>
           </CardHeader>
           <CardContent className="flex items-center gap-4">
@@ -330,7 +338,7 @@ export default function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Weekly Login Activity</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.weeklyLoginActivity")}</CardTitle>
               <CardDescription>Mock data — logins recorded per day</CardDescription>
             </CardHeader>
             <CardContent>
@@ -340,7 +348,7 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Users by Role</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.usersByRole")}</CardTitle>
               <CardDescription>Current distribution across roles</CardDescription>
             </CardHeader>
             <CardContent>
@@ -366,12 +374,12 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <div>
-                <CardTitle className="text-base">Recent Users</CardTitle>
+                <CardTitle className="text-base">{t("dashboard.recentUsers")}</CardTitle>
                 <CardDescription>Newest members of your organization</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/users" className="gap-1 text-xs">
-                  View all
+                  {t("dashboard.viewAll")}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </Button>
@@ -409,7 +417,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              {role === "Super Admin" ? "Recent Activities" : "Recent Activity"}
+              {role === ROLE_NAMES.SUPER_ADMIN ? t("dashboard.recentActivities") : t("dashboard.recentActivity")}
             </CardTitle>
             <CardDescription>Latest actions across the platform</CardDescription>
           </CardHeader>
@@ -445,12 +453,12 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <div>
-              <CardTitle className="text-base">Latest Audit Logs</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.latestAuditLogs")}</CardTitle>
               <CardDescription>Detailed record of recent system events</CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/audit-logs" className="gap-1 text-xs">
-                View all
+                {t("dashboard.viewAll")}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>

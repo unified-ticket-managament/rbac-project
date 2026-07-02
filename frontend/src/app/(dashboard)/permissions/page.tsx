@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/use-translation";
 import { cn } from "@/lib/utils";
 import { permissionService, roleService } from "@/services";
 import { useAuthStore } from "@/store/auth-store";
@@ -58,6 +59,7 @@ function groupIcon(key: string) {
 
 export default function PermissionsPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const canEdit = useAuthStore((s) => s.hasPermission("permission:update"));
 
@@ -184,8 +186,8 @@ export default function PermissionsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Permissions"
-        description="Assign granular permissions to each role."
+        title={t("permissions.title")}
+        description={t("permissions.description")}
       />
 
       <Card>

@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "@/hooks/use-translation";
 import { formatDate } from "@/lib/utils";
 import { auditService, userService } from "@/services";
 import { AuditLog, User } from "@/types";
@@ -28,6 +29,7 @@ import { AuditLog, User } from "@/types";
 type AuditRow = AuditLog & { userName: string; userEmail: string | null };
 
 export default function AuditLogsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -174,8 +176,8 @@ export default function AuditLogsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Audit Logs"
-        description={`A detailed record of activity across your organization${auditQuery.data ? ` — ${auditQuery.data.total} total` : ""}.`}
+        title={t("auditLogs.title")}
+        description={`${t("auditLogs.description")}${auditQuery.data ? ` — ${auditQuery.data.total} ${t("common.total")}` : ""}.`}
       />
 
       <Card>

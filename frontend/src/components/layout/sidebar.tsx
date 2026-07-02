@@ -24,8 +24,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "@/hooks/use-translation";
 import { cn } from "@/lib/utils";
-import { canSeeNavItem, NavItemKey } from "@/lib/role-access";
+import { canSeeNavItem, NAV_ITEM_TRANSLATION_KEY, NavItemKey } from "@/lib/role-access";
 import { authService } from "@/services";
 import { useAuthStore } from "@/store/auth-store";
 
@@ -75,6 +76,7 @@ interface SidebarContentProps {
 export function SidebarContent({ collapsed = false, onNavigate }: SidebarContentProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useTranslation();
   const logout = useAuthStore((state) => state.logout);
   const role = useAuthStore((state) => state.user?.role);
 
@@ -111,6 +113,7 @@ export function SidebarContent({ collapsed = false, onNavigate }: SidebarContent
           {visibleItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
+            const label = t(NAV_ITEM_TRANSLATION_KEY[item.title]);
 
             const link = (
               <Link key={item.href} href={item.href} onClick={onNavigate}>
@@ -130,7 +133,7 @@ export function SidebarContent({ collapsed = false, onNavigate }: SidebarContent
                     />
                   )}
                   <Icon className="h-5 w-5 shrink-0" />
-                  {!collapsed && <span className="truncate">{item.title}</span>}
+                  {!collapsed && <span className="truncate">{label}</span>}
                 </Button>
               </Link>
             );
@@ -140,7 +143,7 @@ export function SidebarContent({ collapsed = false, onNavigate }: SidebarContent
             return (
               <Tooltip key={item.href}>
                 <TooltipTrigger asChild>{link}</TooltipTrigger>
-                <TooltipContent side="right">{item.title}</TooltipContent>
+                <TooltipContent side="right">{label}</TooltipContent>
               </Tooltip>
             );
           })}
@@ -159,7 +162,7 @@ export function SidebarContent({ collapsed = false, onNavigate }: SidebarContent
                   <LogOut className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">Logout</TooltipContent>
+              <TooltipContent side="right">{t("nav.logout")}</TooltipContent>
             </Tooltip>
           ) : (
             <Button
@@ -168,7 +171,7 @@ export function SidebarContent({ collapsed = false, onNavigate }: SidebarContent
               onClick={handleLogout}
             >
               <LogOut className="h-5 w-5" />
-              Logout
+              {t("nav.logout")}
             </Button>
           )}
         </div>

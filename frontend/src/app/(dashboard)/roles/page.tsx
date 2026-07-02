@@ -32,11 +32,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/use-translation";
 import { roleService, userService } from "@/services";
 import { Role, User } from "@/types";
 
 export default function RolesPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -87,8 +89,8 @@ export default function RolesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Roles"
-        description={`Manage access roles across your organization${rolesQuery.data ? ` — ${rolesQuery.data.total} total` : ""}.`}
+        title={t("roles.title")}
+        description={`${t("roles.description")}${rolesQuery.data ? ` — ${rolesQuery.data.total} ${t("common.total")}` : ""}.`}
         action={
           <PermissionGuard permission="role:create">
             <Button

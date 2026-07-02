@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { getCreatableRoleNames, ROLE_NAMES } from "@/lib/role-access";
 import { roleService, userService } from "@/services";
 import { useAuthStore } from "@/store/auth-store";
 import { Role, User } from "@/types";
@@ -46,18 +47,24 @@ function buildSchema(mode: "create" | "edit", currentUserRole: string | undefine
               .optional(),
     })
     .superRefine((data, ctx) => {
-      if (roleMap.get(data.role_id) !== "Staff") return;
+      const selectedRoleName = roleMap.get(data.role_id);
 
-      if (currentUserRole === "Super Admin") {
-        if (!data.manager_id) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["manager_id"], message: "Select a manager" });
+      if (selectedRoleName === ROLE_NAMES.STAFF) {
+        if (currentUserRole === ROLE_NAMES.SUPER_ADMIN) {
+          if (!data.manager_id) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["manager_id"], message: "Select a manager" });
+          }
+          if (!data.teamlead_id) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["teamlead_id"], message: "Select a team lead" });
+          }
+        } else if (currentUserRole === ROLE_NAMES.MANAGER) {
+          if (!data.teamlead_id) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["teamlead_id"], message: "Select a team lead" });
+          }
         }
-        if (!data.teamlead_id) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["teamlead_id"], message: "Select a team lead" });
-        }
-      } else if (currentUserRole === "Manager") {
-        if (!data.teamlead_id) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["teamlead_id"], message: "Select a team lead" });
+      } else if (selectedRoleName === ROLE_NAMES.TEAM_LEAD) {
+        if (currentUserRole === ROLE_NAMES.SUPER_ADMIN && !data.manager_id) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["manager_id"], message: "Select a reporting manager" });
         }
       }
     });
@@ -84,12 +91,18 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
     enabled: open,
   });
 
-  const roles: Role[] = rolesQuery.data?.roles ?? [];
+  const allRoles: Role[] = rolesQuery.data?.roles ?? [];
   const roleMap = useMemo(() => {
     const map = new Map<string, string>();
-    roles.forEach((role) => map.set(role.role_id, role.name));
+    allRoles.forEach((role) => map.set(role.role_id, role.name));
     return map;
-  }, [roles]);
+  }, [allRoles]);
+
+  const creatableRoleNames = getCreatableRoleNames(currentUser?.role);
+  const roles: Role[] =
+    mode === "create" && creatableRoleNames !== null
+      ? allRoles.filter((role) => creatableRoleNames.includes(role.name))
+      : allRoles;
 
   const {
     register,
@@ -132,7 +145,9 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
   const teamleadId = watch("teamlead_id");
 
   const roleName = roleMap.get(roleId);
-  const showHierarchyFields = roleName === "Staff";
+  const showStaffHierarchy = roleName === ROLE_NAMES.STAFF;
+  const showTeamLeadHierarchy = roleName === ROLE_NAMES.TEAM_LEAD;
+  const showHierarchyFields = showStaffHierarchy || showTeamLeadHierarchy;
 
   const hierarchyUsersQuery = useQuery({
     queryKey: ["users-hierarchy-options"],
@@ -141,15 +156,12 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
   });
 
   const allUsers: User[] = hierarchyUsersQuery.data?.users ?? [];
-  const managerOptions = allUsers.filter((u) => roleMap.get(u.role_id) === "Manager");
-  const teamLeadOptionsRaw = allUsers.filter((u) => roleMap.get(u.role_id) === "Team Lead");
+  const managerOptions = allUsers.filter((u) => roleMap.get(u.role_id) === ROLE_NAMES.MANAGER);
+  const teamLeadOptionsRaw = allUsers.filter((u) => roleMap.get(u.role_id) === ROLE_NAMES.TEAM_LEAD);
   const teamLeadOptions =
-    currentUser?.role === "Manager"
+    currentUser?.role === ROLE_NAMES.MANAGER
       ? teamLeadOptionsRaw.filter((u) => u.manager_id === currentUser.user_id)
       : teamLeadOptionsRaw;
-
-  const currentUserRecord = allUsers.find((u) => u.user_id === currentUser?.user_id);
-  const selfManager = allUsers.find((u) => u.user_id === currentUserRecord?.manager_id);
 
   useEffect(() => {
     if (!showHierarchyFields) {
@@ -158,20 +170,24 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
       return;
     }
 
-    if (currentUser?.role === "Manager") {
+    if (currentUser?.role === ROLE_NAMES.MANAGER) {
+      // Manager creating Staff or Team Lead — always reports to the current Manager.
       setValue("manager_id", currentUser.user_id);
-    } else if (currentUser?.role === "Team Lead") {
-      setValue("manager_id", currentUserRecord?.manager_id ?? "");
-      setValue("teamlead_id", currentUser.user_id);
+      if (!showStaffHierarchy) {
+        setValue("teamlead_id", "");
+      }
     }
-  }, [showHierarchyFields, currentUser, currentUserRecord, setValue]);
+  }, [showHierarchyFields, showStaffHierarchy, currentUser, setValue]);
 
   const mutation = useMutation({
     mutationFn: async (values: UserFormValues) => {
-      const isStaffRole = roleMap.get(values.role_id) === "Staff";
-      const hierarchyFields = isStaffRole
-        ? { manager_id: values.manager_id || null, teamlead_id: values.teamlead_id || null }
-        : {};
+      const selectedRoleName = roleMap.get(values.role_id);
+      const hierarchyFields =
+        selectedRoleName === ROLE_NAMES.STAFF
+          ? { manager_id: values.manager_id || null, teamlead_id: values.teamlead_id || null }
+          : selectedRoleName === ROLE_NAMES.TEAM_LEAD
+            ? { manager_id: values.manager_id || null }
+            : {};
 
       if (mode === "edit" && user) {
         return userService.update(user.user_id, {
@@ -277,11 +293,11 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
             {errors.role_id && <p className="text-sm text-destructive">{errors.role_id.message}</p>}
           </div>
 
-          {showHierarchyFields && (
+          {showStaffHierarchy && (
             <div className="space-y-4 rounded-lg border border-dashed border-border p-3">
               <p className="text-xs font-medium text-muted-foreground">Reporting Structure</p>
 
-              {currentUser?.role === "Super Admin" && (
+              {currentUser?.role === ROLE_NAMES.SUPER_ADMIN && (
                 <>
                   <div className="space-y-2">
                     <Label>Manager</Label>
@@ -329,7 +345,7 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
                 </>
               )}
 
-              {currentUser?.role === "Manager" && (
+              {currentUser?.role === ROLE_NAMES.MANAGER && (
                 <>
                   <div className="space-y-2">
                     <Label>Manager</Label>
@@ -363,23 +379,43 @@ export function UserFormDialog({ open, onOpenChange, user }: UserFormDialogProps
                   </div>
                 </>
               )}
+            </div>
+          )}
 
-              {currentUser?.role === "Team Lead" && (
-                <>
-                  <div className="space-y-2">
-                    <Label>Manager</Label>
-                    <Input value={selfManager?.name ?? "Unassigned"} disabled />
-                    <p className="text-xs text-muted-foreground">
-                      Automatically inherited from your assignment.
-                    </p>
-                  </div>
+          {showTeamLeadHierarchy && (
+            <div className="space-y-4 rounded-lg border border-dashed border-border p-3">
+              <p className="text-xs font-medium text-muted-foreground">Reporting Structure</p>
 
-                  <div className="space-y-2">
-                    <Label>Team Lead</Label>
-                    <Input value={currentUser.name} disabled />
-                    <p className="text-xs text-muted-foreground">Automatically assigned as you.</p>
-                  </div>
-                </>
+              {currentUser?.role === ROLE_NAMES.SUPER_ADMIN && (
+                <div className="space-y-2">
+                  <Label>Reporting Manager</Label>
+                  <Select
+                    value={managerId || ""}
+                    onValueChange={(value) => setValue("manager_id", value, { shouldValidate: true })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a reporting manager" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {managerOptions.map((m) => (
+                        <SelectItem key={m.user_id} value={m.user_id}>
+                          {m.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.manager_id && (
+                    <p className="text-sm text-destructive">{errors.manager_id.message}</p>
+                  )}
+                </div>
+              )}
+
+              {currentUser?.role === ROLE_NAMES.MANAGER && (
+                <div className="space-y-2">
+                  <Label>Reporting Manager</Label>
+                  <Input value={currentUser.name} disabled />
+                  <p className="text-xs text-muted-foreground">Automatically assigned as you.</p>
+                </div>
               )}
             </div>
           )}

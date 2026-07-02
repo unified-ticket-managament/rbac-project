@@ -47,6 +47,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/use-translation";
+import { Language, LANGUAGES } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 import { authService } from "@/services";
 import { Theme, useAuthStore, useThemeStore } from "@/store/auth-store";
@@ -57,14 +59,6 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
   { value: "system", label: "System", icon: Monitor },
-];
-
-const LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "es", label: "Español" },
-  { value: "fr", label: "Français" },
-  { value: "de", label: "Deutsch" },
-  { value: "hi", label: "हिन्दी" },
 ];
 
 const accountSchema = z.object({
@@ -79,6 +73,7 @@ type AccountValues = z.infer<typeof accountSchema>;
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
 
@@ -154,8 +149,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Settings"
-        description="Manage your account, appearance, notifications, and security preferences."
+        title={t("settings.title")}
+        description={t("settings.description")}
       />
 
       {/* Account Settings */}
@@ -163,7 +158,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <UserRound className="h-4 w-4" />
-            Account Settings
+            {t("settings.accountSettings")}
           </CardTitle>
           <CardDescription>Update your personal information.</CardDescription>
         </CardHeader>
@@ -233,7 +228,7 @@ export default function SettingsPage() {
       {/* Theme */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Theme</CardTitle>
+          <CardTitle className="text-base">{t("settings.theme")}</CardTitle>
           <CardDescription>Choose how the platform looks on this device.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -272,7 +267,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Bell className="h-4 w-4" />
-            Notifications
+            {t("settings.notifications")}
           </CardTitle>
           <CardDescription>
             Choose what you want to be notified about. Saved to this device.
@@ -307,7 +302,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Globe className="h-4 w-4" />
-            Language
+            {t("settings.language")}
           </CardTitle>
           <CardDescription>Choose your preferred display language.</CardDescription>
         </CardHeader>
@@ -317,7 +312,7 @@ export default function SettingsPage() {
             <Select
               value={language}
               onValueChange={(value) => {
-                setLanguage(value);
+                setLanguage(value as Language);
                 toast({ title: "Language preference saved" });
               }}
             >
@@ -325,7 +320,7 @@ export default function SettingsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {LANGUAGE_OPTIONS.map((option) => (
+                {LANGUAGES.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -341,7 +336,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <ShieldCheck className="h-4 w-4" />
-            Security
+            {t("settings.security")}
           </CardTitle>
           <CardDescription>Manage authentication and account protection.</CardDescription>
         </CardHeader>
@@ -395,7 +390,7 @@ export default function SettingsPage() {
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
               <Laptop className="h-4 w-4" />
-              Session Management
+              {t("settings.sessionManagement")}
             </CardTitle>
             <CardDescription>Devices currently signed in to your account.</CardDescription>
           </div>

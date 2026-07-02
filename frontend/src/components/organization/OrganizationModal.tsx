@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { motion } from "framer-motion";
+import { Minus, Plus, RotateCcw, X } from "lucide-react";
 
 import { EmptyState, ErrorState } from "@/components/shared/stats";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -22,6 +23,10 @@ import { useAuthStore } from "@/store/auth-store";
 import { OrganizationChart } from "./OrganizationChart";
 import { buildHierarchy, HierarchyNode } from "./hierarchy-builder";
 
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2;
+const ZOOM_STEP = 0.1;
+
 interface OrganizationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -33,6 +38,7 @@ export function OrganizationModal({
 }: OrganizationModalProps) {
   const currentUserId = useAuthStore((s) => s.user?.user_id);
   const [selectedNode, setSelectedNode] = useState<HierarchyNode | null>(null);
+  const [zoom, setZoom] = useState(1);
 
   const chartQuery = useQuery({
     queryKey: ["organization-chart"],
@@ -41,8 +47,15 @@ export function OrganizationModal({
   });
 
   useEffect(() => {
-    if (!open) setSelectedNode(null);
+    if (!open) {
+      setSelectedNode(null);
+      setZoom(1);
+    }
   }, [open]);
+
+  const zoomIn = () => setZoom((z) => Math.min(MAX_ZOOM, +(z + ZOOM_STEP).toFixed(2)));
+  const zoomOut = () => setZoom((z) => Math.max(MIN_ZOOM, +(z - ZOOM_STEP).toFixed(2)));
+  const resetZoom = () => setZoom(1);
 
   const hierarchy =
     chartQuery.data && currentUserId
@@ -79,16 +92,61 @@ export function OrganizationModal({
 
         {hierarchy && (
           <div className="flex flex-1 flex-col gap-4 overflow-hidden md:flex-row">
-            <div className="flex-1 overflow-auto rounded-lg border border-border bg-muted/20 p-8">
-              <OrganizationChart
-                node={hierarchy}
-                selectedNodeId={selectedNode?.user_id ?? null}
-                onSelectNode={(node) =>
-                  setSelectedNode((prev) =>
-                    prev?.user_id === node.user_id ? null : node
-                  )
-                }
-              />
+            <div className="relative flex-1 overflow-auto rounded-lg border border-border bg-muted/20 p-8">
+              <motion.div
+                animate={{ scale: zoom }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                style={{ transformOrigin: "top center" }}
+              >
+                <OrganizationChart
+                  node={hierarchy}
+                  selectedNodeId={selectedNode?.user_id ?? null}
+                  onSelectNode={(node) =>
+                    setSelectedNode((prev) =>
+                      prev?.user_id === node.user_id ? null : node
+                    )
+                  }
+                />
+              </motion.div>
+
+              <div className="absolute bottom-4 left-4 flex items-center gap-1 rounded-lg border border-border bg-card/95 p-1 shadow-md backdrop-blur">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={zoomOut}
+                  disabled={zoom <= MIN_ZOOM}
+                  aria-label="Zoom out"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="w-12 text-center text-xs font-medium tabular-nums text-muted-foreground">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={zoomIn}
+                  disabled={zoom >= MAX_ZOOM}
+                  aria-label="Zoom in"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <div className="mx-1 h-5 w-px bg-border" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={resetZoom}
+                  aria-label="Reset zoom"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {selectedNode && (

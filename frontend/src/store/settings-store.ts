@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { Language } from "@/lib/i18n/translations";
+
 export interface NotificationPreferences {
   email: boolean;
   push: boolean;
@@ -47,11 +49,11 @@ const INITIAL_SESSIONS: SessionEntry[] = [
 
 interface SettingsState {
   notifications: NotificationPreferences;
-  language: string;
+  language: Language;
   security: SecurityPreferences;
   sessions: SessionEntry[];
   setNotification: (key: keyof NotificationPreferences, value: boolean) => void;
-  setLanguage: (language: string) => void;
+  setLanguage: (language: Language) => void;
   setSecurity: (key: keyof SecurityPreferences, value: boolean) => void;
   revokeSession: (id: string) => void;
   revokeAllOtherSessions: () => void;

@@ -58,6 +58,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/use-translation";
 import { formatDate } from "@/lib/utils";
 import { roleService, userService } from "@/services";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -67,6 +68,7 @@ type UserRow = User & { roleName: string };
 
 export default function UsersPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -307,8 +309,8 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Users"
-        description={`Manage your organization's users${usersQuery.data ? ` — ${usersQuery.data.total} total` : ""}.`}
+        title={t("users.title")}
+        description={`${t("users.description")}${usersQuery.data ? ` — ${usersQuery.data.total} ${t("common.total")}` : ""}.`}
         action={
           <PermissionGuard permission="user:create">
             <Button
@@ -319,7 +321,7 @@ export default function UsersPage() {
               }}
             >
               <Plus className="h-4 w-4" />
-              Create User
+              {t("users.createButton")}
             </Button>
           </PermissionGuard>
         }

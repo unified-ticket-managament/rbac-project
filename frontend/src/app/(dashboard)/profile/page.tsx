@@ -13,12 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/hooks/use-translation";
 import { formatDate } from "@/lib/utils";
 import { auditService, userService } from "@/services";
 import { useAuthStore } from "@/store/auth-store";
 import { useProfileExtrasStore } from "@/store/profile-extras-store";
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const [orgChartOpen, setOrgChartOpen] = useState(false);
   const { phone, address, avatarUrl } = useProfileExtrasStore();
@@ -38,19 +40,19 @@ export default function ProfilePage() {
   const activity = activityQuery.data ?? [];
 
   const fields = [
-    { label: "Email", value: user?.email },
-    { label: "Role", value: user?.role },
-    { label: "Phone", value: phone || "Not set" },
-    { label: "Department", value: "Not set" },
+    { label: t("profile.email"), value: user?.email },
+    { label: t("profile.role"), value: user?.role },
+    { label: t("profile.phone"), value: phone || t("profile.notSet") },
+    { label: t("profile.department"), value: t("profile.notSet") },
     {
-      label: "Joined Date",
+      label: t("profile.joinedDate"),
       value: userRecordQuery.data?.created_at ? formatDate(userRecordQuery.data.created_at) : "—",
     },
   ];
 
   return (
     <div>
-      <PageHeader title="Profile" description="View your account information" />
+      <PageHeader title={t("profile.title")} description={t("profile.description")} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -80,8 +82,8 @@ export default function ProfilePage() {
                 </div>
               ))}
               <div>
-                <dt className="text-sm text-muted-foreground">Address</dt>
-                <dd className="mt-0.5 text-sm font-medium">{address || "Not set"}</dd>
+                <dt className="text-sm text-muted-foreground">{t("profile.address")}</dt>
+                <dd className="mt-0.5 text-sm font-medium">{address || t("profile.notSet")}</dd>
               </div>
             </dl>
 
@@ -91,7 +93,7 @@ export default function ProfilePage() {
               onClick={() => setOrgChartOpen(true)}
             >
               <Network className="h-4 w-4" />
-              Organization Chart
+              {t("profile.orgChart")}
             </Button>
           </CardContent>
         </Card>
