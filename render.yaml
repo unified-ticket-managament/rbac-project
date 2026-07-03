@@ -1,8 +1,9 @@
-databases:
-  - name: rbac-db
-    plan: free
-    databaseName: rbac_db
-    user: rbac_user
+# This blueprint deploys two Render Web Services against an EXTERNAL Neon
+# Postgres database (not Render's own managed Postgres). DATABASE_URL below
+# is intentionally `sync: false` — paste your Neon connection string into
+# the Render dashboard after the service is created. See DEPLOYMENT.md for
+# the full first-deploy runbook (there's a one-time circular dependency
+# between CORS_ORIGINS and NEXT_PUBLIC_API_URL that needs a second pass).
 
 services:
   - type: web
@@ -24,10 +25,13 @@ services:
         value: "true"
       - key: LOG_LEVEL
         value: INFO
+      # Paste your Neon connection string here (Neon dashboard -> Connect ->
+      # "Connection string", pooled or direct both work). Any of
+      # postgres:// / postgresql:// / postgresql+asyncpg:// schemes are
+      # accepted and normalized automatically, sslmode/channel_binding
+      # params included.
       - key: DATABASE_URL
-        fromDatabase:
-          name: rbac-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: JWT_ALGORITHM
@@ -36,7 +40,8 @@ services:
         value: "30"
       - key: REFRESH_TOKEN_EXPIRE_DAYS
         value: "7"
-      # Update this to the deployed frontend URL (e.g. https://rbac-frontend.onrender.com)
+      # Update this to the deployed frontend URL after first deploy
+      # (e.g. https://rbac-frontend.onrender.com) — no trailing slash.
       - key: CORS_ORIGINS
         sync: false
 
@@ -45,11 +50,12 @@ services:
     runtime: node
     plan: free
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
         value: 20.18.0
-      # Update this to the deployed backend URL + /api/v1 (e.g. https://rbac-backend.onrender.com/api/v1)
+      # Update this to the deployed backend URL + /api/v1 after first deploy
+      # (e.g. https://rbac-backend.onrender.com/api/v1).
       - key: NEXT_PUBLIC_API_URL
         sync: false
